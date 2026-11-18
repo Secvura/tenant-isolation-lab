@@ -1,0 +1,23 @@
+# Local Supabase stack (if run from inside this folder)
+supabase/
+.branches/
+.temp/
+
+# Environment and credentials
+.env
+.env.*
+*.pem
+*.key
+
+# Local run output and database dumps
+*.log
+*.out
+results/
+*.dump
+*.backup
+
+# Editor and OS files
+.DS_Store
+.vscode/
+.idea/
+*.swp
