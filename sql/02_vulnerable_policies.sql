@@ -1,4 +1,4 @@
--- DELIBERATELY VULNERABLE. Three common tenant isolation mistakes.
+-- DELIBERATELY VULNERABLE. Four common tenant isolation mistakes.
 alter table public.invoices enable row level security;
 alter table public.memberships enable row level security;
 -- Flaw 1: tenant taken from user_metadata, which the signed-in user can edit

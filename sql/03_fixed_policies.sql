@@ -25,6 +25,11 @@ create policy inv_update on public.invoices for update to authenticated
 create policy inv_delete on public.invoices for delete to authenticated
   using (tenant_id in (select private.user_tenant_ids()));
 -- memberships: read your own rows only; no insert, update or delete policies.
+-- Enabled here as well as in 02, so the fix does not depend on 02 having run.
+alter table public.memberships enable row level security;
+drop policy if exists mem_select on public.memberships;
+create policy mem_select on public.memberships for select to authenticated
+  using (user_id = auth.uid());
 alter table public.attachments enable row level security;
 create policy att_select on public.attachments for select to authenticated
   using (tenant_id in (select private.user_tenant_ids()));
