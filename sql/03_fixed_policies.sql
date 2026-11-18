@@ -28,3 +28,7 @@ create policy inv_delete on public.invoices for delete to authenticated
 alter table public.attachments enable row level security;
 create policy att_select on public.attachments for select to authenticated
   using (tenant_id in (select private.user_tenant_ids()));
+-- tenants: members can read their own tenant; no insert, update or delete policies.
+alter table public.tenants enable row level security;
+create policy ten_select on public.tenants for select to authenticated
+  using (id in (select private.user_tenant_ids()));

@@ -2,6 +2,16 @@
 -- in its own subtransaction that is always rolled back, so checks never
 -- affect each other. 'blocked' passes when 0 rows are affected or Postgres
 -- refuses the statement; 'allowed' passes when at least 1 row is affected.
+-- Seed check: run as the table owner (row level security does not apply), so
+-- a 'blocked' result can never come from missing seed data.
+do $$ begin
+  if (select count(*) from public.tenants) <> 2
+     or (select count(*) from public.memberships) <> 2
+     or (select count(*) from public.invoices) <> 3
+     or (select count(*) from public.attachments) <> 2 then
+    raise exception 'Seed data is not what 01_schema.sql inserts. Run the lab on a fresh, empty database.';
+  end if;
+end $$;
 create schema if not exists lab;
 create or replace function lab.try(p_role text, p_claims jsonb, p_sql text)
 returns int language plpgsql as $$
@@ -50,7 +60,29 @@ insert into checks values
  ('T10','a visitor who is not signed in reads any attachments','blocked','anon', null,
   'select count(*) from public.attachments'),
  ('T11','a visitor who is not signed in reads any invoices','blocked','anon', null,
-  'select count(*) from public.invoices');
+  'select count(*) from public.invoices'),
+ ('T12','bob changes his own invoice','allowed','authenticated',
+  '{"sub":"b0b00000-0000-0000-0000-000000000002","role":"authenticated","user_metadata":{"tenant_id":"bbbbbbbb-0000-0000-0000-000000000002"}}',
+  'with x as (update public.invoices set amount_pence = 1 where tenant_id = ''bbbbbbbb-0000-0000-0000-000000000002'' returning 1) select count(*) from x'),
+ ('T13','bob deletes his own invoice','allowed','authenticated',
+  '{"sub":"b0b00000-0000-0000-0000-000000000002","role":"authenticated","user_metadata":{"tenant_id":"bbbbbbbb-0000-0000-0000-000000000002"}}',
+  'with x as (delete from public.invoices where tenant_id = ''bbbbbbbb-0000-0000-0000-000000000002'' returning 1) select count(*) from x'),
+ ('T14','bob moves his own invoice into tenant A','blocked','authenticated',
+  '{"sub":"b0b00000-0000-0000-0000-000000000002","role":"authenticated","user_metadata":{"tenant_id":"bbbbbbbb-0000-0000-0000-000000000002"}}',
+  'with x as (update public.invoices set tenant_id = ''aaaaaaaa-0000-0000-0000-000000000001'' where tenant_id = ''bbbbbbbb-0000-0000-0000-000000000002'' returning 1) select count(*) from x'),
+ ('T15','a visitor who is not signed in creates a tenant','blocked','anon', null,
+  'with x as (insert into public.tenants values (gen_random_uuid(), ''Made by a visitor'') returning 1) select count(*) from x'),
+ ('T16','a visitor who is not signed in renames tenant B','blocked','anon', null,
+  'with x as (update public.tenants set name = ''Renamed'' where id = ''bbbbbbbb-0000-0000-0000-000000000002'' returning 1) select count(*) from x'),
+ ('T17','bob renames tenant A','blocked','authenticated',
+  '{"sub":"b0b00000-0000-0000-0000-000000000002","role":"authenticated"}',
+  'with x as (update public.tenants set name = ''Renamed'' where id = ''aaaaaaaa-0000-0000-0000-000000000001'' returning 1) select count(*) from x'),
+ ('T18','alice reads attachments that are not tenant A''s','blocked','authenticated',
+  '{"sub":"a11ce000-0000-0000-0000-000000000001","role":"authenticated"}',
+  'select count(*) from public.attachments where tenant_id <> ''aaaaaaaa-0000-0000-0000-000000000001'''),
+ ('T19','bob reads his own tenant record','allowed','authenticated',
+  '{"sub":"b0b00000-0000-0000-0000-000000000002","role":"authenticated"}',
+  'select count(*) from public.tenants where id = ''bbbbbbbb-0000-0000-0000-000000000002''');
 select id, expect, n as rows,
        case when (expect = 'blocked' and n <= 0) or (expect = 'allowed' and n > 0)
             then 'PASS' else 'FAIL' end as result, actor

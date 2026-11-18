@@ -17,4 +17,4 @@ create policy mem_select on public.memberships for select to authenticated
   using (user_id = auth.uid());
 create policy mem_insert on public.memberships for insert to authenticated
   with check (user_id = auth.uid());
--- Flaw 4: row level security never enabled on attachments.
+-- Flaw 4: row level security never enabled on attachments or tenants.
