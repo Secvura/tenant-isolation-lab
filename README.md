@@ -44,5 +44,9 @@ Adjust the `sql/` paths to point at this folder. `--no-backup` deletes the local
 ## What a passing retest shows, and what it does not
 It shows that, on the tested database and build, these 19 specific checks behave as expected for these two test users. It does not show that the whole app is secure. It does not cover the API layer, server-side code that uses the service role key (which bypasses row level security), storage buckets, edge functions, or tables that are not in the test. A fix is only "retested" once the client has deployed it and the checks pass against the deployed build. Before then its status is "fix prepared, deployment pending".
 
+It also does not test two common ways round row level security in Supabase. A view reads its tables with its owner's rights by default, so it can skip the rules unless it is created with `security_invoker = true` (PostgreSQL 15 and later). A `security definer` function in an exposed schema also runs with its owner's rights. Either can undo a correct fix.
+
+Do not paste `sql/03_fixed_policies.sql` into your own project. It is written for this lab's four tables, and your tables, roles and existing rules will differ. Use it as a pattern, then test your own build with your own allowed and blocked cases.
+
 ## Who we are
 Secvura is a UK firm that reviews web and SaaS apps for small software companies, prepares fixes with their team, and retests each fix after it is deployed. Where you need an accredited test, use a CREST or CHECK firm. secvura.com
