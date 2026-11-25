@@ -49,4 +49,4 @@ It also does not test two common ways round row level security in Supabase. A vi
 Do not paste `sql/03_fixed_policies.sql` into your own project. It is written for this lab's four tables, and your tables, roles and existing rules will differ. Use it as a pattern, then test your own build with your own allowed and blocked cases.
 
 ## Who we are
-Secvura is a UK firm that reviews web and SaaS apps for small software companies, prepares fixes with their team, and retests each fix after it is deployed. Where you need an accredited test, use a CREST or CHECK firm. secvura.com
+Secvura is a UK firm that reviews web and SaaS apps for small software companies, prepares fixes with their team, and retests each fix after it is deployed. Where you need an accredited test, use a CREST or CHECK firm. [secvura.com](https://secvura.com/find-and-fix)
